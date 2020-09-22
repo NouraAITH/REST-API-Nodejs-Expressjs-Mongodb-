@@ -30,6 +30,8 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+
 //app.use(cookieParser('12345-67890-09876-54321')); //we've specifies a cookie secret for the cookie parser
 app.use(session({
   name: 'session-id',
@@ -40,7 +42,8 @@ app.use(session({
 }));
 
 
-
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
 //Basic Authentication + CookieSession////////////
 function auth(req,res,next) {
    console.log(req.session);
@@ -48,7 +51,7 @@ function auth(req,res,next) {
    if(!req.session.user){
       
     var authHeader= req.headers.authorization;
-   if(!authHeader){
+  
        var err= new Error('You are not authonticated!!');
        res.setHeader('WWW-Authenticate', 'Basic');
        err.status=401;
@@ -56,27 +59,8 @@ function auth(req,res,next) {
 
    }
 
-           var auth=new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-           var user= auth[0];
-           var pass=auth[1];
-           if (user === 'admin' && pass === 'password') {
-             req.session.user='admin';
-            next(); // authorized
-        }
-
-        else{
-          var err= new Error('You are not authonticated!!');
-            res.setHeader('WWW-Authenticate', 'Basic');
-               err.status=401;
-             return next(err);
-
-        }
-
-
-   }
-
    else {
-    if (req.session.user === 'admin') {
+    if (req.session.user === 'authenticated') {
         next();
     }
     else {
@@ -99,11 +83,12 @@ app.use(auth);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
 app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);
 app.use('/leaders', leaderRouter);
+app.use('/users', usersRouter);
+
 
 
 // catch 404 and forward to error handler
